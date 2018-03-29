@@ -30,10 +30,10 @@ import java.util.*;
 
 /**
  * Generates JSON Schemas from the matched Class Paths, by mapping Class attributes to the associated JSON field.
- *
- * @author Aurélien Bourdon (aurelien.bourdon at gmail.com)
+ * Mapper class is for TEST folder
+ * @author Aurelien Bourdon (aurelien.bourdon at gmail.com)
  */
-class Mapper {
+public class Mapper {
 
     /**
      * The associated Mojo configuration
@@ -56,29 +56,72 @@ class Mapper {
      */
     public List<JsonSchema> generateJsonSchemas() {
         final List<JsonSchema> generatedSchemas = new ArrayList<>();
-
+		System.out.println("Mapper::generateJsonSchemas (TEST) LINE 59 generatedSchemas="+generatedSchemas);
         ObjectMapper mapper = new ObjectMapper();
+        System.out.println("Mapper::generateJsonSchemas (TEST) LINE 61 mapper="+mapper);
         SchemaFactoryWrapper schemaVisitor = new HyperSchemaFactoryWrapper();
+        System.out.println("Mapper::generateJsonSchemas (TEST) LINE 63 schemaVisitor="+schemaVisitor);
         schemaVisitor.setVisitorContext(new LinkVisitorContext());
-
+		System.out.println("Mapper::generateJsonSchemas (TEST) LINE 65 generateClassNames()="+generateClassNames());
         for (String className : generateClassNames()) {
             try {
                 try {
-                    mapper.acceptJsonFormatVisitor(mapper.constructType(
-                            getClass().getClassLoader().loadClass(className)
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 68 mapper="+mapper);
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 69 className="+className);
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 70 schemaVisitor="+schemaVisitor);
+					String rootPath = Paths.get(config.getBuildDirectory()).toString();
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 73 rootPath="+rootPath);
+					String fullPath=rootPath+"\\io\\gravitee\\maven\\plugins\\json\\schema\\generator\\util\\samples\\One.class";
+					Class testClazz=null;
+					Class clazz=null;
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 75 fullPath="+fullPath);
+					clazz=this.getClass();
+					if(className.indexOf("Recursive")!=-1) clazz=io.gravitee.maven.plugins.json.schema.generator.mojo.samples.Recursive.class;
+					if(className.indexOf("One")!=-1)       clazz=io.gravitee.maven.plugins.json.schema.generator.util.samples.One.class;
+					if(className.indexOf("SimpleBean")!=-1) clazz=io.gravitee.maven.plugins.json.schema.generator.mojo.samples.SimpleBean.class;
+					if(className.indexOf("NoBean")!=-1)     clazz=io.gravitee.maven.plugins.json.schema.generator.mojo.samples.NoBean.class;
+					if(className.indexOf("BeanWithExternalDependency")!=-1) clazz=io.gravitee.maven.plugins.json.schema.generator.mojo.samples.BeanWithExternalDependency.class;
+
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 76 clazz="+clazz);
+					ClassLoader testClassLoader =null;
+					if(clazz!=null)           testClazz=clazz;
+					if(testClassLoader!=null) testClassLoader=clazz.getClassLoader();
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 77 testClassLoader="+testClassLoader);
+
+					try {
+						if(testClassLoader!=null) testClazz=clazz.forName(fullPath,true,testClassLoader);
+						else                      testClazz=clazz.forName(fullPath);
+					} catch(Exception cnfe) { ; }
+
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 77 testClazz="+testClazz);
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 80 testClassLoader="+testClassLoader);
+                    mapper.acceptJsonFormatVisitor(mapper.constructType(testClazz
+						    //testClassLoader.loadClass(className)
+                            //getClass().getClassLoader().loadClass(className)
                     ), schemaVisitor);
+                    System.out.println("Mapper::generateJsonSchemas (TEST) LINE 85 mapper="+mapper);
                 } catch (JsonMappingException e) {
-                    throw new GenerationException("Unable to format class " + className, e);
+					System.out.println("Mapper::generateJsonSchemas (TEST) LINE 75 throws JsonMappingException message="+e.getMessage());
+                    throw new GenerationException("Mapper::generateJsonSchemas (TEST) LINE 76 Unable to format class=" + className, e);
                 }
+                System.out.println("Mapper::generateJsonSchemas (TEST) LINE 73 schemaVisitor="+schemaVisitor);
                 JsonSchema schema = schemaVisitor.finalSchema();
+                System.out.println("Mapper::generateJsonSchemas (TEST) LINE 74 schema="+schema);
                 if (schema == null) {
-                    throw new IllegalArgumentException("Could not build schema or find any classes.");
+                    throw new IllegalArgumentException("MapperSchema::generateJsonSchemas (TEST) LINE 83 Could not build schema or find any classes.");
                 }
+                System.out.println("Mapper::generateJsonSchemas (TEST) LINE 85 schema="+schema);
                 generatedSchemas.add(schema);
-            } catch (GenerationException | ClassNotFoundException e) {
-                config.getLogger().warn("Unable to generate JSON schema for class " + className, e);
+            }
+            //catch(ClassNotFoundException  cnfe)
+            //{   //surefire uses its own classloader and will fail any class located in test-classes folder
+			//	System.out.println("Mapper::generateJsonSchemas (TEST) LINE 90 throws ClassNotFoundException message="+cnfe.getMessage());
+			//}
+            catch (GenerationException e) {
+                System.out.println("Mapper::generateJsonSchemas (TEST) LINE 93 Unable to generate JSON schema for class " + className+" message="+e.getMessage());
             }
         }
+        System.out.println("Mapper::generateJsonSchemas (TEST) LINE 96 returns generatedSchemas="+generatedSchemas);
         return generatedSchemas;
     }
 
